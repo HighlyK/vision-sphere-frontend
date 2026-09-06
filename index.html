@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- SEO Meta Tags -->
+    <title data-i18n="app_title">VisionSphere | Global Intelligence & Live Geospatial News Stream</title>
+    <meta name="description" content="VisionSphere is a real-time global intelligence platform providing 3D satellite mapping, country dossiers, sector news, and geospatial event tracking.">
+    <meta name="keywords" content="VisionSphere, Global Intelligence, Geospatial Tracking, Live News Feed, Tactical Analytics, 3D Globe">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <link rel="canonical" href="https://vision-sphere-share.vercel.app/">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="VisionSphere | Global Intelligence Platform">
+    <meta property="og:description" content="Real-time global intelligence, 3D satellite visualization, geospatial layer analytics, and live tactical news streams.">
+    <meta property="og:url" content="https://vision-sphere-share.vercel.app/">
+    <meta property="og:image" content="./VS-Logo-01.jpg">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="VisionSphere | Global Intelligence Platform">
+    <meta name="twitter:description" content="Explore real-time geospatial intelligence, country dossiers, and global news streams on 3D globe views.">
+    <meta name="twitter:image" content="./VS-Logo-01.jpg">
+
+    <!-- Structured Schema Data for AI Crawlers & Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://vision-sphere-share.vercel.app/#software",
+          "name": "VisionSphere Intelligence Platform",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web Browser",
+          "description": "VisionSphere is an interactive 3D global intelligence application providing live geospatial tracking, dynamic sector updates, country dossiers, and real-time news monitoring.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "@type": "NewsMediaOrganization",
+          "@id": "https://vision-sphere-share.vercel.app/#organization",
+          "name": "VisionSphere Stream",
+          "url": "https://vision-sphere-share.vercel.app/",
+          "logo": "https://vision-sphere-share.vercel.app/VS-Logo-01.jpg",
+          "description": "Real-time global intelligence feed providing news updates, geopolitical dossiers, and market analytics."
+        }
+      ]
+    }
+    </script>
+
+    <link rel="icon" type="image/png" href="./VS-Logo-01.jpg">
+    <link rel="apple-touch-icon" href="./VS-Logo-01.jpg">
+
+    <!-- Cesium Stylesheet & App Custom CSS -->
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <meta name="theme-color" content="#000000">
+
+    <!-- External SDKs -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1643.0.min.js"></script>
+    
+    <!-- CesiumJS Engine -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Cesium.js"></script>
+</head>
+<body>
+
+    <!-- Mobile Screen Lock Overlay -->
+    <div id="mobile-lock-screen">
+        <div class="lock-content">
+            <span class="lock-icon">📱</span>
+            <h2 data-i18n="mobile_title">Mobile Experience</h2>
+            <p data-i18n="mobile_desc">Stay tuned for the mobile experience.<br>Please access VisionSphere via desktop for optimal performance.</p>
+        </div>
+    </div>  
+
+    <!-- Main Workspace -->
+    <div id="app-container">
+        
+        <!-- Left: 3D Globe & Spatial Map View -->
+        <div id="map-pane">
+            
+            <!-- Top-Left: User Authentication Profile Control -->
+            <div id="top-left-profile">
+                <button id="profile-pill-btn" onclick="handleProfileClick()">
+                    <span class="profile-avatar">👤</span>
+                    <span id="profile-status-text" data-i18n="sign_in">Sign In</span>
+                </button>
+                <div id="profile-dropdown" class="profile-dropdown hidden">
+                    <div id="profile-user-email"></div>
+                    <button class="btn-sm primary" onclick="handleLogOut()" data-i18n="sign_out">Sign Out</button>
+                </div>
+            </div>
+
+            <!-- Top-Right: Layers & Settings Toolbar -->
+            <div id="top-right-layers" style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; align-items: flex-start; z-index: 30;">
+                
+                <!-- Data Layers Control -->
+                <div style="position: relative;">
+                    <button id="layers-menu-btn" onclick="toggleLayersMenu()">
+                        <span class="btn-icon">🛰️</span> <span data-i18n="datalayers">DataLayers</span>
+                    </button>
+                    <div id="layers-dropdown" class="profile-dropdown hidden">
+                        <div id="gilu-layers-container">
+                            <div class="layer-status-text" data-i18n="loading_layers">Loading Layers</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Global Engine Settings Control -->
+                <div style="position: relative;">
+                    <button id="settings-menu-btn" onclick="toggleSettingsMenu()">
+                        <span class="btn-icon">⚙️</span> <span data-i18n="settings">Settings</span>
+                    </button>
+                    <div id="settings-dropdown" class="profile-dropdown hidden" style="width: 240px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+                        
+                        <div class="setting-group" style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;" data-i18n="setting_lang">INTERFACE LANGUAGE</label>
+                            <select id="setting-language" onchange="changeLanguage(this.value)" style="background: var(--bg-element); color: var(--text-main); border: 1px solid var(--border-light); padding: 6px; border-radius: 6px; outline: none; font-size: 12px;">
+                                <option value="en">English (US)</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group" style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;" data-i18n="setting_perf">GRAPHICS & PERFORMANCE</label>
+                            <select id="setting-performance" onchange="applyPerformanceSetting(this.value)" style="background: var(--bg-element); color: var(--text-main); border: 1px solid var(--border-light); padding: 6px; border-radius: 6px; outline: none; font-size: 12px;">
+                                <option value="balanced" selected data-i18n="perf_balanced">Balanced</option>
+                                <option value="high" data-i18n="perf_high">High Speed</option>
+                                <option value="quality" data-i18n="perf_quality">Ultra Visual Quality</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group" style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;" data-i18n="setting_globe">GLOBE MEMORY & SIZE</label>
+                            <select id="setting-globe-size" onchange="applyGlobeSizeSetting(this.value)" style="background: var(--bg-element); color: var(--text-main); border: 1px solid var(--border-light); padding: 6px; border-radius: 6px; outline: none; font-size: 12px;">
+                                <option value="large" selected data-i18n="globe_large">Large / High Resolution</option>
+                                <option value="small" data-i18n="globe_small">Small / Low Memory</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom-Left: System Changelog Version Pill -->
+            <div id="bottom-left-version" style="position: absolute; bottom: 30px; left: 20px; z-index: 25;">
+                <button id="version-tag-btn" onclick="toggleChangelogModal(true)">
+                    <span class="btn-icon" style="font-size: 14px;">🚀</span> v0.35
+                </button>
+            </div>
+        </div>
+
+        <!-- Center: Horizontal Split Resizer Bar -->
+        <div id="h-resizer" class="resizer"></div>
+
+        <!-- Right: Multi-Tile Information Side Pane -->
+        <div id="side-pane">
+            
+            <!-- Tile 0: Persistent Sector Intelligence Pane (General News) -->
+            <div class="tile" id="sector-tile" style="flex: 0 0 280px; min-height: 100px; display: flex; flex-direction: column;">
+                <div class="window-header" style="background:transparent; padding:0; border:none; margin-bottom:10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="window-title">
+                        <span style="font-size: 14px; font-weight: 600; letter-spacing: 1px; color: var(--text-highlight);" data-i18n="general_news">GENERAL NEWS</span>
+                    </div>
+                    <div class="window-meta-right">
+                        <strong id="sector-timestamp" style="color: var(--text-muted); font-size: 11px; font-weight: 500;">--</strong>
+                    </div>
+                </div>
+                
+                <!-- Dynamic Sector Module Scroll Container -->
+                <div class="window-body" id="sector-content-container" style="padding: 4px 0; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex: 1;">
+                    <div class="layer-status-text" style="text-align: center; color: var(--text-muted); padding: 20px;" data-i18n="please_wait">Please Wait...</div>
+                </div>
+            </div>
+
+            <!-- Vertical Resizer 0 -->
+            <div id="v-resizer-0" class="resizer v-resizer"></div>
+              
+            <!-- Tile 1: News Feed -->
+            <div class="tile" id="news-tile" itemscope itemtype="https://schema.org/LiveBlogPosting">
+                <h2 itemprop="headline" data-i18n="live_intel_stream">Live Intel Stream</h2>
+                <div id="news-feed-content" itemprop="liveBlogUpdate">
+                    <div class="layer-status-text" data-i18n="scanning_nodes">Scanning for active nodes...</div>
+                </div>
+            </div>
+
+            <!-- Vertical Resizer 1 -->
+            <div id="v-resizer-1" class="resizer v-resizer"></div>
+
+            <!-- Tile 2: Node Details & Social Discussion -->
+            <div class="tile" id="details-tile">
+                
+                <!-- Idle / Empty Placeholder State -->
+                <div id="details-empty-state" class="details-placeholder">
+                    <div class="placeholder-icon">📡</div>
+                    <h3 data-i18n="no_target_selected">No Target Selected</h3>
+                    <p data-i18n="no_target_desc">Click any point or intel node on the 3D globe to analyze location details, coordinates, media, and coms.</p>
+                </div>
+
+                <!-- Active Content Container -->
+                <div id="details-content-container" class="hidden">
+                    <div class="details-header">
+                        <div class="details-meta-top">
+                            <span id="post-intensity" class="intensity-badge badge-low">LOW</span>
+                            <span id="post-time" class="news-time">--</span>
+                        </div>
+                        <h2 id="post-title" class="details-title">Selected Location</h2>
+                        <div class="details-location-pill">
+                            <span>📍</span> <span id="post-location-name">Global Target</span>
+                        </div>
+                    </div>
+
+                    <!-- Coordinates & Source Grid -->
+                    <div class="details-specs-grid">
+                        <div class="spec-card">
+                            <label data-i18n="latitude">Latitude</label>
+                            <span id="post-lat">0.0000°</span>
+                        </div>
+                        <div class="spec-card">
+                            <label data-i18n="longitude">Longitude</label>
+                            <span id="post-lng">0.0000°</span>
+                        </div>
+                        <div class="spec-card spec-card-full">
+                            <label data-i18n="intel_provider">Intel Provider / Source</label>
+                            <span id="post-source" class="news-source">Verified Stream</span>
+                        </div>
+                    </div>
+
+                    <!-- Media Presentation Box -->
+                    <div id="post-media-container" class="media-container hidden">
+                        <img id="post-photo" src="" alt="Intel Photo" class="intel-media-img hidden" />
+                        <video id="post-video" controls class="intel-media-video hidden"></video>
+                    </div>
+
+                    <!-- Narrative Brief -->
+                    <div class="details-section">
+                        <label class="section-label" data-i18n="intelligence_brief">Intelligence Brief</label>
+                        <p id="post-context" class="details-narrative">No description provided.</p>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="actions-bar">
+                        <button id="like-btn" onclick="toggleLike()">
+                            <span class="btn-icon">🤍</span> <span data-i18n="like">Like</span>(<span id="like-count">0</span>)
+                        </button>
+                        <button id="recenter-btn" onclick="glideToLocation()">
+                            <span class="btn-icon">🎯</span> <span data-i18n="recenter">Recenter</span>
+                        </button>
+                        <button id="share-btn" onclick="share()">
+                            <span class="btn-icon">🔗</span> <span data-i18n="share">Share</span>
+                        </button>
+                    </div>
+
+                    <!-- Tactical Discussion Stream -->
+                    <div id="comments-section" class="comments-container">
+                        <label class="section-label" data-i18n="community_discussion">Community Discussion</label>
+                        <div id="comments-feed" class="comments-feed"></div>
+                        <div class="comment-input-group">
+                            <input type="text" id="comment-input" placeholder="Broadcast tactical comment..." data-i18n-placeholder="comment_placeholder" onkeydown="if(event.key==='Enter') sendComment()">
+                            <button class="primary" onclick="sendComment()" data-i18n="send">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vertical Resizer 2 (Hidden until 3rd tile activates) -->
+            <div id="v-resizer-2" class="resizer v-resizer hidden"></div>
+
+            <!-- Tile 3: Country Dossier View Pane -->
+            <div class="tile hidden" id="dossier-tile">
+                <div class="window-header" style="background:transparent; padding:0; border:none; margin-bottom:10px;">
+                    <div class="window-title">
+                        <img id="dossier-flag" src="" alt="Flag" class="dossier-flag hidden" />
+                        <span id="dossier-country-name">COUNTRY INTEL DOSSIER</span>
+                        <span id="dossier-status-badge" class="intensity-badge">STATUS</span>
+                    </div>
+                    <div class="window-controls">
+                        <button class="win-btn win-close" onclick="toggleDossierWindow(false)" title="Close Pane">&times;</button>
+                    </div>
+                </div>
+
+                <div class="window-tab-bar">
+                    <button class="window-tab-btn active" onclick="switchDossierTab('governance')" data-i18n="tab_gov">Gov</button>
+                    <button class="window-tab-btn" onclick="switchDossierTab('economy')" data-i18n="tab_economy">Economy</button>
+                    <button class="window-tab-btn" onclick="switchDossierTab('events')" data-i18n="tab_events">Events</button>
+                    <div class="window-meta-right">
+                        <span><span data-i18n="upd">Upd:</span> <strong id="dossier-last-updated">--</strong></span>
+                    </div>
+                </div>
+
+                <div class="window-body" style="padding: 10px 0;">
+                    
+                    <!-- Tab 1: Governance -->
+                    <div id="tab-governance" class="window-tab-content active">
+                        <div class="dossier-grid">
+                            <div class="dossier-metric"><label data-i18n="capital">Capital</label><span id="dossier-capital">--</span></div>
+                            <div class="dossier-metric"><label data-i18n="system">System</label><span id="dossier-system-type">--</span></div>
+                        </div>
+                        
+                        <div class="dossier-metric-full">
+                            <label data-i18n="parliament_structure">Parliament Structure</label>
+                            <div id="dossier-parliament" class="dossier-text-block">--</div>
+                        </div>
+                        <div class="dossier-metric-full">
+                            <label data-i18n="legal_framework">Legal Framework</label>
+                            <div id="dossier-legal" class="dossier-text-block">--</div>
+                        </div>
+
+                        <h3 class="section-title" data-i18n="key_leadership">Key Leadership</h3>
+                        <div id="dossier-leadership-container" class="leadership-list"></div>
+
+                        <h3 class="section-title" data-i18n="party_distribution">Party / Power Distribution</h3>
+                        <div id="dossier-party-container" class="party-list"></div>
+
+                        <h3 class="section-title" data-i18n="active_sanctions">Active Sanctions</h3>
+                        <ul id="dossier-sanctions-list" class="dossier-list"></ul>
+                    </div>
+
+                    <!-- Tab 2: Macro Economy & Demographics -->
+                    <div id="tab-economy" class="window-tab-content">
+                        <div class="dossier-grid">
+                            <div class="dossier-metric"><label data-i18n="inflation">Inflation</label><span id="dossier-inflation">--</span></div>
+                            <div class="dossier-metric"><label data-i18n="debt_gdp">Debt/GDP</label><span id="dossier-debt">--</span></div>
+                        </div>
+
+                        <div class="dossier-metric-full">
+                            <label data-i18n="currency_trend">Currency Trend</label>
+                            <div id="dossier-currency-trend" class="dossier-highlight-val">--</div>
+                        </div>
+
+                        <h3 class="section-title" data-i18n="gdp_history">GDP History ($ USD)</h3>
+                        <div id="dossier-gdp-chart"></div>
+
+                        <h3 class="section-title" data-i18n="population_growth">Population Growth (Count)</h3>
+                        <div id="dossier-pop-chart"></div>
+
+                        <h3 class="section-title" data-i18n="economic_overview">Economic Overview</h3>
+                        <p id="dossier-economic-status" class="dossier-description">--</p>
+
+                        <h3 class="section-title" data-i18n="trade_focus">Trade Focus</h3>
+                        <div class="dossier-grid">
+                            <div><label class="sub-label" data-i18n="exports">Exports:</label><ul id="dossier-exports-list" class="dossier-list"></ul></div>
+                            <div><label class="sub-label" data-i18n="partners">Partners:</label><ul id="dossier-partners-list" class="dossier-list"></ul></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Events & Active Factions -->
+                    <div id="tab-events" class="window-tab-content">
+                        <h3 class="section-title" data-i18n="active_factions">Active Factions</h3>
+                        <div id="dossier-factions-container" class="factions-list"></div>
+
+                        <h3 class="section-title" data-i18n="latest_events_timeline">Latest Events Timeline</h3>
+                        <div id="dossier-events-container" class="events-timeline"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div> 
+    </div>
+
+    <!-- Authentication Modal -->
+    <div id="auth-modal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 data-i18n="auth_title">Sign In / Sign Up</h3>
+                <button class="close-btn" onclick="toggleAuthModal(false)">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleLogIn(event)" style="display: flex; flex-direction: column; gap: 10px;">
+                    <input type="email" id="auth-email" placeholder="Email address" data-i18n-placeholder="email_address" required>
+                    <input type="password" id="auth-password" placeholder="Password" data-i18n-placeholder="password" required>
+                    <div class="modal-buttons">
+                        <button type="submit" class="primary" data-i18n="log_in">Log In</button>
+                        <button type="button" onclick="handleSignUp(event)" data-i18n="sign_up">Sign Up</button>
+                    </div>
+                </form>
+                
+                <div class="auth-divider"><span data-i18n="or">or</span></div>
+                
+                <button class="google-btn" onclick="handleGoogleLogin()">
+                    <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    <span data-i18n="continue_google">Continue with Google</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Changelog Modal -->
+    <div id="changelog-modal" class="modal-backdrop hidden">
+        <div class="modal-card" style="width: 450px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 data-i18n="system_changelog">System Changelog</h3>
+                <button class="close-btn" onclick="toggleChangelogModal(false)">&times;</button>
+            </div>
+            
+            <div class="modal-body changelog-body">
+
+                <!-- LATEST VERSION (Kept Red/High) -->
+                <div class="changelog-entry">
+                    <div class="changelog-header">
+                        <span class="intensity-badge badge-high">v0.35 - LATEST</span>
+                        <span class="news-time">Current Build</span>
+                    </div>
+                    <h4 style="margin: 8px 0; color: var(--text-highlight);">Security & User Experience Update</h4>
+                    <ul>
+                        <li><strong>Security:</strong> Improved overall system security and protected API core endpoints.</li>
+                        <li><strong>Localization:</strong> Added dynamic language translation updates and fallback syncs.</li>
+                        <li><strong>User Experience:</strong> Upgraded interface responsiveness and general user experiences.</li>
+                    </ul>
+                </div>
+
+                <!-- PREVIOUS VERSION (Border removed, changed to Orange) -->
+                <div class="changelog-entry">
+                    <div class="changelog-header">
+                        <!-- Swapped badge-high for badge-med, and added an explicit orange color just in case -->
+                        <span class="intensity-badge badge-med" style="color: orange; border-color: orange;">v0.3</span>
+                        <span class="news-time">Previous</span>
+                    </div>
+                    <h4 style="margin: 8px 0; color: var(--text-highlight);">Split-Screen UI & News Module</h4>
+                    <ul>
+                        <li><strong>UI Overhaul:</strong> Completely overhauled the user interface for a sleeker, optimized experience.</li>
+                        <li><strong>Layout Shift:</strong> Transitioned from a floating window style to a structured, split-screen tab architecture.</li>
+                        <li><strong>New Feature:</strong> Officially released and integrated the General News module.</li>
+                    </ul>
+                </div>
+                
+            </div>
+
+                <!-- VERSION 0.2 -->
+                <div class="changelog-entry">
+                    <div class="changelog-header" style="margin-top: 20px;">
+                        <span class="intensity-badge badge-med">v0.2</span>
+                        <span class="news-time">Previous Build</span>
+                    </div>
+                    <h4 style="margin: 8px 0; color: var(--text-highlight);">Country Engine & Performance</h4>
+                    <ul>
+                        <li><strong>New Feature:</strong> Introduced the Country Information Engine for deeper data rendering.</li>
+                        <li><strong>Enhancements:</strong> Rolled out initial UI updates and styling improvements.</li>
+                        <li><strong>Optimization:</strong> Deployed underlying performance updates for smoother application handling.</li>
+                    </ul>
+                </div>
+
+                <!-- VERSION 0.1 -->
+                <div class="changelog-entry">
+                    <div class="changelog-header" style="margin-top: 20px;">
+                        <span class="intensity-badge badge-low">v0.1</span>
+                        <span class="news-time">Launch Build</span>
+                    </div>
+                    <h4 style="margin: 8px 0; color: var(--text-highlight);">Initial Release</h4>
+                    <ul>
+                        <li>Initial deployment of the core system and basic mapping mechanics.</li>
+                    </ul>
+                </div>    
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Application Script Entry Point -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "VisionSphere",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1057.0",
+    "@libsql/client": "^0.17.3",
+    "@nuxtjs/supabase": "^2.0.4",
+    "cesium": "^1.140.0",
+    "vue": "^3.5.31",
+    "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "supabase": "^2.86.0"
+  }
+}
